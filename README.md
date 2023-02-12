@@ -7,7 +7,8 @@ For unknown reasons, the LittleFS interface code that initializes FLASH at ADDR_
 doesn't want to initialize FLASH at ADDR_FLASH_PAGE_44, when using the STM32-F103C8T6 part.<br>
 When building the project with "Release", the application is well under 44KBytes in size,<br>
 leaving 20KBytes for LittleFS storage.</br>
-</br>
+<br>
+<br>
 **Wiring Diagram for Blue Pill (STM32-F103C8T6)**  (Wire colors refer to the included picture)</br>
 Using the ST-Link V2 - 20 pin JTAG connector<br>
 |F103 Pin|Signal|Wire Color|ST-Link Pin|ST-Link Signal|
@@ -27,9 +28,9 @@ Connecting to STM32F103C8T6 pin 7 - NRST<br>
 FTDI board jumpered for 3.3V<br>
 |F103 Pin|Signal|Wire Color|FTDI Board PIN|
 |---|---|---|---|
-|PA2|USART2_TX|Gray|FTDI_RX
-|PA3|USART2_RX|White|FTDI_TX
-|GND|Ground|Black|FTDI_GND
+|PA2|USART2_TX|Gray|FTDI_RX|
+|PA3|USART2_RX|White|FTDI_TX|
+|GND|Ground|Black|FTDI_GND|
  <br>
  <br>
 Reference Information:<br>
