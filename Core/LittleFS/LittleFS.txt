@@ -1,0 +1,6 @@
+This is version 2.5 of LittleFS, April 14, 2022.
+
+This module is a library that requires an interface to the user's Flash, as well as a configuration
+data structure describing the FLASH, and the methods to call for access.
+
+From that point, the functions defined in lfs.h may be used to mount, format, and use the file system.
