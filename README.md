@@ -9,16 +9,17 @@ When building the project with "Release", the application is well under 44KBytes
 leaving 20KBytes for LittleFS storage.</br>
 </br>
 **Wiring Diagram for Blue Pill (STM32-F103C8T6)**  (Wire colors refer to the included picture)</br>
-F103 Pin   Signal   Wire Color       ST-Link V2 (20-pin connector - CN3)   Comment</br>
-JTAG-1     3.3V      White     ---    19    3.3V (VDD)</br>
-JTAG-2     DIO       Gray      ---    7     TMS_SWDIO</br>
-JTAG-3     CLK       Violet    ---    9     TCK_SWCLK</br>
-JTAG-4     GND       Blue      ---    4     3.3V (VDD)</br>
+|F103 Pin|Signal|Wire Color|ST-Link V2 (20-pin connector - CN3)|
+|JTAG-1|3.3V|White|19|3.3V (VDD)|
+|---|---|---|---|---|
+|JTAG-2|DIO|Gray|7|TMS_SWDIO|
+|JTAG-3|CLK|Violet|9|TCK_SWCLK|
+|JTAG-4|GND|Blue|4|3.3V (VDD)|
 </br>
 **Additional wire added NRST, making JTAG connections considerably faster:**</br>
   7        NRST      Blue      ---    15    NRST   (STM32F103C8T6 pin 7)</br>
 </br>
-**Serial Interface**</br>
+**Serial Interface** (Different cable)</br>
 F103 Pin  Signal    Wire Color      FTDI Board    (FTDI board jumpered for 3.3V)</br>
  PA2     USART2_TX    Gray     ---    FTDI_RX</br>
  PA3     USART2_RX    White    ---    FTDI_TX</br>
