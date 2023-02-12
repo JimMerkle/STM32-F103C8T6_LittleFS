@@ -10,8 +10,8 @@ leaving 20KBytes for LittleFS storage.</br>
 </br>
 **Wiring Diagram for Blue Pill (STM32-F103C8T6)**  (Wire colors refer to the included picture)</br>
 |F103 Pin|Signal|Wire Color|ST-Link V2 (20-pin connector - CN3)|
+| --- | --- | --- | --- | --- |
 |JTAG-1|3.3V|White|19|3.3V (VDD)|
-|---|---|---|---|---|
 |JTAG-2|DIO|Gray|7|TMS_SWDIO|
 |JTAG-3|CLK|Violet|9|TCK_SWCLK|
 |JTAG-4|GND|Blue|4|3.3V (VDD)|
