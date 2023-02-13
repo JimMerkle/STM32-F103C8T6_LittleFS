@@ -1,0 +1,9 @@
+# .gitignore file for STM32-F103C8T6 Project
+# Ignore everything in the Debug folder
+Debug/*
+
+# Ignore everything in the Release folder
+Release/*
+
+# Ignore .settings/stm32cubeide.project.prefs
+.settings/stm32cubeide.project.prefs
