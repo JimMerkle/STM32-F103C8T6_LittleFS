@@ -1,12 +1,14 @@
 # STM32-F103C8T6_LittleFS<br>
 **STM32-F103 with command line, XModem, and LittleFS (using FLASH on the STM32-F103C8T6)**
 <br>
-This code base was originally developed for the NUCLEO-F103RB board, where the STM32-F103RB has
-  128KB of FLASH.<br>
-For unknown reasons, the LittleFS interface code that initializes FLASH at ADDR_FLASH_PAGE_96,<br>
-doesn't want to initialize FLASH at ADDR_FLASH_PAGE_44, when using the STM32-F103C8T6 part.<br>
-When building the project with "Release", the application is well under 44KBytes in size,<br>
+This code base was originally developed for the NUCLEO-F103RB board (STM32-F103RB has 128KB of FLASH).<br>
+When building this project with "Release", the application is well under 44KBytes in size,<br>
 leaving 20KBytes for LittleFS storage.<br>
+<br>
+The linker / locator tools have made it difficult to place a LittleFS image inside the device's 64K of FLASH.<br>
+Although the firmware easily fits into 44K of FLASH space, changing the size of the FLASH in the .ld file<br>
+from 64K to 44K, produces an errror: "arm-none-eabi\bin\ld.exe: region `FLASH' overflowed by 14832 bytes".<br>
+Placing the LittleFS storage in the top end of 128K area appears to work, just like the STM32-F103RB.<br>
 <br>
 **Wiring Diagram for Blue Pill (STM32-F103C8T6)**  (Wire colors refer to the included picture)<br>
 Using the ST-Link V2 - 20 pin JTAG connector <br>
