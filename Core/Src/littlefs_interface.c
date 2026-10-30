@@ -25,9 +25,7 @@ extern lfs_t lfs;
 extern  void init_lfs_cfg(void);
 extern  struct lfs_config lfs_cfg;
 
-void memory_dump(void * address, uint32_t count); // hexdump.c
-void file_dump(void * address, uint32_t count);  // hexdump.c
-//void hexdump(void * address, uint32_t count, uint32_t address_value); // hexdump.c
+#include "../hexdump/hexdump.h" // hexdump()
 
 // Read a region in a FLASH block. Negative error codes are propagated to the user.
 int lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size)
@@ -38,7 +36,7 @@ int lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void 
 		return LFS_ERR_INVAL;
 	}
 
-	lfs_block_t address = FLASH_USER_START_ADDR + (block * STM32F103_SECTOR_SIZE + off);
+	uint32_t address = FLASH_USER_START_ADDR + (block * STM32F103_SECTOR_SIZE + off);
 	//printf("+%s(Addr 0x%06lX, Len 0x%04lX)\r\n",__func__,address,size);
 	//hexdump((void *)address,size);
 	memcpy(buffer, (void *)address, size);
@@ -50,44 +48,46 @@ int lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void 
 int lfs_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size)
 {
 	PARAMETER_NOT_USED(c);
-	lfs_block_t address = FLASH_USER_START_ADDR + (block * STM32F103_SECTOR_SIZE + off);
-	HAL_StatusTypeDef hal_rc = HAL_OK;
-	uint32_t block_count = size / 8;
+	uint32_t address = FLASH_USER_START_ADDR + (block * STM32F103_SECTOR_SIZE + off);
+	HAL_StatusTypeDef hal_rc;
+	uint32_t dword_count = size / 8;
+
+	// LittleFS writes in multiples of prog_size (8), so a partial doubleword means a config error
+	if(!buffer || (size % 8)) {
+		printf("%s Invalid parameter!\r\n",__func__);
+		return LFS_ERR_INVAL;
+	}
 
 	//printf("+%s(Addr 0x%06lX, Len 0x%04lX)\r\n",__func__,address,size);
 	//hexdump((void *)address,size);
-  	/* Program the user Flash area word by word
+  	/* Program the user Flash area doubleword by doubleword
   	(area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
 
   	uint64_t data_source;
 
-  	for(uint32_t i=0;i<block_count;i++)
+  	for(uint32_t i=0;i<dword_count;i++)
   	{
   		memcpy(&data_source,buffer,8); // load the 64-bit source from the buffer
   		hal_rc = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, data_source);
-  		if (hal_rc == HAL_OK)
+  		if (hal_rc != HAL_OK)
   		{
-  			address += 8;
-  			buffer = (uint8_t *)buffer + 8;
+  			// Stop on the first failure - report it to LittleFS rather than continuing with a partial write
+  			printf("Program Error, 0x%X at 0x%08lX\n",hal_rc,address);
+  			return LFS_ERR_IO;
   		}
-  		else
-  		{
-  		  /* Error occurred while writing data in Flash memory.
-  			 User can add here some code to deal with this error */
-  			printf("Program Error, 0x%X\n",hal_rc);
-
-  		} // else
+  		address += 8;
+  		buffer = (const uint8_t *)buffer + 8;
   	} // for
   	//printf("-%s\n",__func__);
 
-  	return hal_rc == HAL_OK?LFS_ERR_OK:LFS_ERR_IO; // If HAL_OK, return LFS_ERR_OK, else return LFS_ERR_IO
+  	return LFS_ERR_OK;
 }
 
 // Erase a single FLASH sector (block)
 int lfs_erase(const struct lfs_config *c, lfs_block_t block)
 {
 	PARAMETER_NOT_USED(c);
-	lfs_block_t address = FLASH_USER_START_ADDR + (block * STM32F103_SECTOR_SIZE);
+	uint32_t address = FLASH_USER_START_ADDR + (block * STM32F103_SECTOR_SIZE);
 	//printf("+%s(Addr 0x%06lX)\r\n",__func__,address);
 
 	HAL_StatusTypeDef hal_rc;
@@ -141,7 +141,7 @@ struct lfs_config lfs_cfg =
     .sync = lfs_sync,    // sync function
     .read_size = 1,      // minimum read size (Our Flash interface supports single byte reads)
     .prog_size = 8,      // minimum program size (Our Flash interface supports 8 byte writes)
-    .block_size = STM32F103_SECTOR_SIZE,       // block_size - 4KByte erase sectors
+    .block_size = STM32F103_SECTOR_SIZE,       // block_size - 1KByte erase pages
     .block_count = STM32F103_SECTOR_COUNT,     // block_count - number of sectors
     .block_cycles = 256,                 // block_cycles - suggested value: 100 - 1000
     .cache_size = CACHE_SIZE,            // cache_size - multiple of read and program block size
@@ -270,6 +270,12 @@ int cl_dir(void)
 // Make a directory..  Required 1 argument, the directory name
 int cl_make_dir(void)
 {
+    // verify argument count
+    if(argc < 2) {
+        printf("\nExpect <directory name>\n");
+        return 0;
+    }
+
     int retval = lfs_mkdir(&lfs, argv[1]);
     if(retval != LFS_ERR_OK) {
         printf("%s: Error creating directory \"%s\"\n",__func__,argv[1]);
@@ -283,6 +289,12 @@ int cl_make_dir(void)
 // Remove a file / directory..  Required 1 argument, the directory name
 int cl_remove(void)
 {
+    // verify argument count
+    if(argc < 2) {
+        printf("\nExpect <file / directory name>\n");
+        return 0;
+    }
+
     int retval = lfs_remove(&lfs, argv[1]);
     if(retval != LFS_ERR_OK) {
         printf("%s: Error removing \"%s\"\n",__func__,argv[1]);
@@ -293,18 +305,98 @@ int cl_remove(void)
     return LFS_ERR_OK;
 }
 
-// Make a file..  Required 1 argument, the file name
+// Report a failed lfs_file_open() for a new file
+static void report_create_error(const char * func, const char * filename, int retval)
+{
+    if(retval == LFS_ERR_EXIST)
+        printf("%s: File \"%s\" already exists - remove it first\n",func,filename);
+    else
+        printf("%s: Error %d creating file \"%s\"\n",func,retval,filename);
+}
+
+// Make a file of filesize bytes, filled with an incrementing 0x00..0xFF data pattern
+// Record the time to create and store the file
+// From the SAME51 project's make_file(), with these changes:
+//  - writes a partial last block, so any size works (not only multiples of 256)
+//  - LFS_O_EXCL, so an existing file is an error instead of being written into
+//  - times with HAL_GetTick() (ms); the 16-bit TIM4 us counter rolls over every 65ms
+static int make_file(const char * filename, uint32_t filesize)
+{
+    lfs_file_t file;
+
+    // Returns a negative error code on failure, LFS_ERR_EXIST if the file already exists.
+    int retval = lfs_file_open(&lfs, &file,
+        filename, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL);
+
+    if(retval != LFS_ERR_OK) {
+        report_create_error(__func__, filename, retval);
+        return retval;
+    }
+
+    // Load the file with incrementing data
+    // Create a 256byte buffer with a know data pattern
+    uint8_t buf[256];
+    for(unsigned i=0;i<sizeof(buf);i++)
+    		buf[i] = (uint8_t)i;
+
+    uint32_t start_ms = HAL_GetTick();
+
+    uint32_t remaining = filesize;
+    while(remaining) {
+        uint32_t chunk = remaining < sizeof(buf) ? remaining : sizeof(buf);
+		retval = lfs_file_write(&lfs, &file, buf, chunk);
+		if(retval < LFS_ERR_OK) {
+			printf("%s: Error %d writing file \"%s\"%s\n",__func__,retval,filename,
+			       retval == LFS_ERR_NOSPC ? " (file system full)" : "");
+			break;
+		}
+		remaining -= chunk;
+    }
+
+    // remember the storage is not updated until the file is closed successfully
+    // even if error writing, close file before returning
+    int close_rc = lfs_file_close(&lfs, &file);
+    if(close_rc != LFS_ERR_OK) {
+        printf("%s: Error %d closing file \"%s\"\n",__func__,close_rc,filename);
+        if(retval >= LFS_ERR_OK) retval = close_rc;
+    }
+
+    uint32_t stop_ms = HAL_GetTick();
+
+    printf("Created file: \"%s\", Size: %lu, Time: %lu ms\n",filename,filesize - remaining,stop_ms - start_ms);
+    return retval < LFS_ERR_OK ? retval : LFS_ERR_OK;
+} // make_file()
+
+// Make a file..  Requires 1 argument, the file name, optional 2nd argument, the size
+//   makefile <file name>          - file holds the text "Filename: <file name>"
+//   makefile <file name> <size>   - file holds <size> bytes of 0x00..0xFF pattern (decimal or 0x hex)
 int cl_make_file(void)
 {
+    // verify argument count
+    if(argc < 2) {
+        printf("\nExpect <file name> [size]\n");
+        return 0;
+    }
+
+    if(argc > 2) {
+        char * end;
+        uint32_t filesize = strtoul(argv[2], &end, 0); // allow user to use decimal or hex
+        if(*end || end == argv[2]) {
+            printf("\nInvalid size: \"%s\"\n",argv[2]);
+            return 0;
+        }
+        return make_file(argv[1], filesize);
+    }
+
     lfs_file_t file;
     char buffer[LFS_NAME_MAX]; // to store the stuff we will write to the file
 
-    // Returns a negative error code on failure.
+    // Returns a negative error code on failure, LFS_ERR_EXIST if the file already exists.
     int retval = lfs_file_open(&lfs, &file,
-        argv[1], LFS_O_RDWR | LFS_O_CREAT);
+        argv[1], LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL);
 
     if(retval != LFS_ERR_OK) {
-        printf("%s: Error creating file \"%s\"\n",__func__,argv[1]);
+        report_create_error(__func__, argv[1], retval);
         return retval;
     }
 
@@ -325,55 +417,16 @@ int cl_make_file(void)
     printf("Created file: \"%s\"\n",argv[1]);
     return LFS_ERR_OK;
 }
-#if 0
-// Make a 4KByte file..  Required 1 argument, the file name
-// Record the time to create and store the file
-int cl_make_file_4kb(void)
-{
-    lfs_file_t file;
-
-    // Returns a negative error code on failure.
-    int retval = lfs_file_open(&lfs, &file,
-        argv[1], LFS_O_RDWR | LFS_O_CREAT);
-
-    if(retval != LFS_ERR_OK) {
-        printf("%s: Error creating file \"%s\"\n",__func__,argv[1]);
-        return retval;
-    }
-
-    // Load the file with incrementing data
-    // Create a 256byte buffer with a know data pattern
-    uint8_t buf[256];
-    for(unsigned i=0;i<sizeof(buf);i++)
-    		buf[i] = (uint8_t)i;
-
-    volatile TIM_TypeDef *TIMx = TIM4;
-    uint32_t start_us = TIMx->CNT; // read us hardware timer
-
-    // Write the buffer to the file 16 times
-    for(unsigned count=0;count<16;count++) {
-		retval = lfs_file_write(&lfs, &file, buf, sizeof(buf));
-		if(retval < LFS_ERR_OK) {
-			printf("%s: Error writing file \"%s\"\n",__func__,argv[1]);
-			break;
-		}
-    }
-
-    // remember the storage is not updated until the file is closed successfully
-    // even if error writing, close file before returning
-    lfs_file_close(&lfs, &file);
-
-    uint32_t stop_us = TIMx->CNT; // read us hardware timer
-    if(stop_us < start_us) stop_us += 1<<16; // roll-over, add 16-bit roll-over offset
-
-    printf("Created file: \"%s\", Time: %lu us\n",argv[1],stop_us-start_us);
-    return retval;
-} // cl_make_file_4kb()
-#endif
 
 // Display file - Type...  Requires 1 argument, the filename
 int cl_cat(void)
 {
+    // verify argument count
+    if(argc < 2) {
+        printf("\nExpect <file name>\n");
+        return 0;
+    }
+
     lfs_file_t file;
     char buffer[120]; // buffer to hold a line+ from the file
 
@@ -411,10 +464,15 @@ int cl_cat(void)
     return LFS_ERR_OK;
 }
 
-#if 0
 // Display file data as hexadecimal - Requires 1 argument, the filename
 int cl_file_dump(void)
 {
+    // verify argument count
+    if(argc < 2) {
+        printf("\nExpect <file name>\n");
+        return 0;
+    }
+
     lfs_file_t file;
     uint32_t file_offset = 0;
     char buffer[512]; // buffer to hold file data
@@ -434,24 +492,31 @@ int cl_file_dump(void)
     do {
         bytesread = lfs_file_read(&lfs, &file, buffer, sizeof(buffer));
         if(bytesread < LFS_ERR_OK) {
-            printf("%s: Error reading file \"%s\"\n",__func__,argv[1]);
+            printf("%s: Error %d reading file \"%s\"\n",__func__,bytesread,argv[1]);
+            break; // a negative count would keep the do-while looping forever
         }
     	// Use our favorite Hex Dump routine to display the memory
         hexdump(buffer, bytesread, file_offset); // hexdump.c
         file_offset += bytesread; // update offset for next pass
     } while(bytesread); // keep looping as long as we keep getting data from file
+    // No delay needed between blocks (the SAME51 version has one): printf() blocks until the UART takes each character
 
     // Close file before returning
     lfs_file_close(&lfs, &file);
     printf("\n\n");
 
-    return LFS_ERR_OK;
+    return bytesread < LFS_ERR_OK ? bytesread : LFS_ERR_OK;
 }
-#endif
 
 // Copy file - Source - Destination
 int cl_copy(void)
 {
+    // verify argument count
+    if(argc < 3) {
+        printf("\nExpect <source file> <destination file>\n");
+        return 0;
+    }
+
     lfs_file_t source;
     lfs_file_t destination;
     char buffer[1024]; // buffer to copy data
@@ -505,6 +570,12 @@ int cl_copy(void)
 // This command requires 2 command line arguments, <current name> <new name>
 int cl_rename(void)
 {
+    // verify argument count
+    if(argc < 3) {
+        printf("\nExpect <current name> <new name>\n");
+        return 0;
+    }
+
     // Returns a negative error code on failure.
     int retval = lfs_rename(&lfs, argv[1], argv[2]);
 
@@ -523,6 +594,12 @@ int cl_rename(void)
 // The time it takes to open the file, read the file, and close the file will be measured and reported.
 int cl_readspeed(void)
 {
+    // verify argument count
+    if(argc < 2) {
+        printf("\nExpect <file name>\n");
+        return 0;
+    }
+
     lfs_file_t file;
     volatile TIM_TypeDef *TIMx = TIM4;
     uint32_t start_us = TIMx->CNT; // read us hardware timer

@@ -17,15 +17,28 @@
 
 // Define ANSI colors, to be used within printf() text
 // These #defines rely on string concatenation to function as desired
+
+//Foreground Colors:
+//30: Black, 31: Red, 32: Green, 33: Yellow, 34: Blue, 35: Magenta, 36: Cyan, and 37: White.
+#define COLOR_RED           	"\033[31m"   /* red text */
+#define COLOR_GREEN         	"\033[32m"   /* green text */
+#define COLOR_YELLOW        	"\033[33m"   /* yellow text */
+#define COLOR_BLUE          	"\033[34m"   /* blue text */
+#define COLOR_MAGENTA			"\033[35m"   /* magenta text */
+#define COLOR_CYAN          	"\033[36m"   /* cyan text */
+#define COLOR_WHITE         	"\033[37m"   /* white text */
+
+#define COLOR_RESET             "\033[0m"    /* Reset text color to previous color */
+
 #define COLOR_YELLOW_ON_BLACK "\033[93m\033[40m"
 #define COLOR_YELLOW_ON_BLUE  "\033[93m\033[44m"
 #define COLOR_YELLOW_ON_GREEN "\033[93m\033[42m"
 #define COLOR_YELLOW_ON_RED   "\033[93m\033[41m"
 #define COLOR_YELLOW_ON_VIOLET "\033[93m\033[45m"
-#define COLOR_GREEN  "\033[92m"   /* Bright Green text */
-#define COLOR_VIOLET "\033[95m"   /* Bright Violet text */
-#define COLOR_YELLOW "\033[93m"   /* Bright Yellow text */
-#define COLOR_RESET  "\033[0m"    /* Reset text color to previous color */
+//#define COLOR_GREEN  "\033[92m"   /* Bright Green text */
+//#define COLOR_VIOLET "\033[95m"   /* Bright Violet text */
+//#define COLOR_YELLOW "\033[93m"   /* Bright Yellow text */
+
 
 // Cursor movement
 #define _BS  '\b' /*(char)8 */
@@ -40,11 +53,10 @@
 extern char buffer[]; // holds command strings from user
 extern char * argv[]; // pointers into buffer
 extern int argc; // number of words (command & arguments)
-extern int __io_putchar(int ch);
-extern int __io_getchar(void);
+extern int __io_getchar(void);             // main.c - read serial input
 
 // Forward declarations
-int cl_is_whitespace(char c);
+int cl_isWhiteSpace(char c);
 int cl_parseArgcArgv(char * inBuf,char **words, int count);
 void cl_setup(void);
 void cl_loop(void);
@@ -54,15 +66,11 @@ void cl_process_buffer(void);
 int cl_help(void);
 int cl_add(void);
 int cl_id(void);
-int cl_info(void);
 int cl_reset(void);
-int cl_dump(void);  // hexdump.c
-int cl_blink(void);
 int cl_timer(void);
-int cl_version(void); // command_line.c
-
-int edit_text_main(void); //text_edit.c
-int cl_xmodem_send(void); // xmodem.c
-int cl_xmodem_receive(void); // xmodem.c
+int cl_info(void);
+int cl_version(void);
+int cl_blink(void);
+int cl_cls(void);
 
 #endif // _command_line_h_

@@ -39,7 +39,7 @@ int cl_make_dir(void);
 int cl_remove(void);
 int cl_rmdir(void);
 int cl_make_file(void);
-//int cl_make_file_4kb(void);
+
 int cl_rename(void);
 int cl_cat(void);
 int cl_copy(void);
@@ -48,13 +48,13 @@ int cl_readspeed(void);
 
 // Records to add into command line interface (command_line.c):
 #define LITTLEFS_COMMANDS \
-{"dir",        "Directory listing for file system",                         1, cl_dir}, \
-{"mkdir",      "Make Directory",                                            2, cl_make_dir}, \
-{"remove",     "Remove File/Directory (directory must be empty)",           2, cl_remove}, \
-{"makefile",   "Make a file <file name>",                                   2, cl_make_file}, \
-{"rename",     "Rename file/directory <current name> <new name>",           3, cl_rename}, \
-{"cat",        "Display text file (only printable text)",                   2, cl_cat}, \
-{"type",       "Display text file (only printable text)",                   2, cl_cat}, \
-{"copy",       "Copy file <source file name> <destination file name>",      3, cl_copy}, \
-{"readspeed",  "Display time to open, read, and close <file>",              2, cl_readspeed} \
+{"ls",         "Directory listing for file system",                         cl_dir}, \
+{"mkdir",      "Make Directory",                                            cl_make_dir}, \
+{"rm",         "Remove File/Directory (directory must be empty)",           cl_remove}, \
+{"makefile",   "Make a file <file name> [size], size bytes of 00..FF pattern",cl_make_file}, \
+{"mv",         "Rename file/directory <current name> <new name>",           cl_rename}, \
+{"cat",        "Display text file (only printable text)",                   cl_cat}, \
+{"filedump",   "Display <file> data as Hexadecimal",                        cl_file_dump}, \
+{"cp",         "Copy file <source file name> <destination file name>",      cl_copy}, \
+{"readspeed",  "Display time to open, read, and close <file>",              cl_readspeed} \
 

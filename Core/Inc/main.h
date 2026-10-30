@@ -53,6 +53,9 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+extern UART_HandleTypeDef huart1;   // console / Y-Modem UART
+uint16_t usart1_rx_count(void);     // bytes waiting in the USART1 DMA RX buffer
+int __io_getchar(void);             // non-blocking, returns EOF when no data
 
 /* USER CODE END EFP */
 

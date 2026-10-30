@@ -44,8 +44,8 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim4;
 
-UART_HandleTypeDef huart2;
-DMA_HandleTypeDef hdma_usart2_rx;
+UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 
@@ -56,7 +56,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM4_Init(void);
-static void MX_USART2_UART_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -64,33 +64,42 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// DMA Buffer for usart2 RX
-#define USART2_RX_DMA_BUFFER_SIZE 1030 // any size will do, but we may want to choose X-Modem receive size
-uint8_t usart2_rx_dma_buffer[USART2_RX_DMA_BUFFER_SIZE];
+// DMA Buffer for usart1 RX
+#define USART1_RX_DMA_BUFFER_SIZE 1030 // any size will do, but we may want to choose X-Modem receive size
+uint8_t usart1_rx_dma_buffer[USART1_RX_DMA_BUFFER_SIZE];
 
 // Implement a get_byte(void) function that utilizes a circular DMA RX buffer that:
 // 1) Tests if data is available in the DMA RX buffer
 // 2) Pulls and returns the data
 // 3) Manages an index_out value for next removal of data
 // 4) As a non-blocking function, return EOF when no bytes are available, else returns data byte
+static uint16_t index_out = 0; // next byte to remove from the DMA RX buffer
+
+// Return the number of bytes waiting in the DMA RX buffer
+uint16_t usart1_rx_count(void)
+{
+	uint16_t index_in = USART1_RX_DMA_BUFFER_SIZE - huart1.hdmarx->Instance->CNDTR;
+	if(index_in >= index_out) return index_in - index_out;
+	return USART1_RX_DMA_BUFFER_SIZE - index_out + index_in; // wrapped
+}
+
 int __io_getchar(void)
 {
-	static uint16_t index_out = 0;
-	uint16_t index_in = USART2_RX_DMA_BUFFER_SIZE - huart2.hdmarx->Instance->CNDTR;
+	uint16_t index_in = USART1_RX_DMA_BUFFER_SIZE - huart1.hdmarx->Instance->CNDTR;
 	if(index_in == index_out) return EOF;
 	// Else, we have a byte in buffer to return
-	uint8_t data = usart2_rx_dma_buffer[index_out];
+	uint8_t data = usart1_rx_dma_buffer[index_out];
 	// advance index
 	index_out++;
 	// wrap index when necessary
-	if(index_out >= USART2_RX_DMA_BUFFER_SIZE) index_out = 0;
+	if(index_out >= USART1_RX_DMA_BUFFER_SIZE) index_out = 0;
 	return data;
 }
 
 // Define serial input and output functions using UART2
 int __io_putchar(int ch)
 {
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 1000);
+    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 1000);
     return 1;
 }
 /* USER CODE END 0 */
@@ -125,12 +134,12 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM4_Init();
-  MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   //printf("Welcome - NUCLEO-F103RB_LittleFS\n");
 
   /* Put UART peripheral in DMA reception mode ###########################*/
-  if (HAL_UART_Receive_DMA(&huart2, usart2_rx_dma_buffer, USART2_RX_DMA_BUFFER_SIZE) != HAL_OK)
+  if (HAL_UART_Receive_DMA(&huart1, usart1_rx_dma_buffer, USART1_RX_DMA_BUFFER_SIZE) != HAL_OK)
   {
     /* Transfer error in reception process */
     Error_Handler();
@@ -249,35 +258,35 @@ static void MX_TIM4_Init(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
+  * @brief USART1 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART2_UART_Init(void)
+static void MX_USART1_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USART2_Init 0 */
+  /* USER CODE BEGIN USART1_Init 0 */
 
-  /* USER CODE END USART2_Init 0 */
+  /* USER CODE END USART1_Init 0 */
 
-  /* USER CODE BEGIN USART2_Init 1 */
+  /* USER CODE BEGIN USART1_Init 1 */
 
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART2_Init 2 */
+  /* USER CODE BEGIN USART1_Init 2 */
 
-  /* USER CODE END USART2_Init 2 */
+  /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -291,9 +300,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
 
 }
 
