@@ -8,9 +8,10 @@
 #ifndef SRC_VERSION_H_
 #define SRC_VERSION_H_
 
+// Record each version in CHANGELOG.md
 #define VERSION_MAJOR	1
-#define VERSION_MINOR   0
-#define VERSION_BUILD	2
+#define VERSION_MINOR   1
+#define VERSION_BUILD	0
 
 typedef struct {
 	uint32_t major : 8;

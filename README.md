@@ -13,6 +13,7 @@ Commands: help, cls, id, info, reset, timer, blink, dump, ymodem, version,<br>
 ls, mkdir, rm, makefile, mv, cat, filedump, cp, readspeed.<br>
 Modules live in their own folders under Core/ (Core/ymodem, Core/hexdump), each with a README.md.<br>
 test/test_history.py checks history and line editing over the serial port.<br>
+Version history: CHANGELOG.md<br>
 <br>
 ![My Setup](MySetup.jpg)<br>
 Original setup: ST-Link V2 and FTDI serial board<br>
