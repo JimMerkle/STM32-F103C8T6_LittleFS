@@ -22,7 +22,8 @@
  * - YMODEM_ERR_GENERAL: General error (file I/O, protocol violation, timeout)
  * - YMODEM_ERR_CANCELLED: Transfer cancelled by remote party (CAN received)
  * - YMODEM_ERR_FILE_EXISTS: Receive failed - destination file already exists
- * 
+ * - YMODEM_ERR_TIMEOUT: Receive failed - no sender started before the 'C' requests ran out
+ *
  * USAGE:
  * Check return value against these constants rather than using magic numbers.
  * This improves code readability and maintainability.
@@ -31,7 +32,8 @@ typedef enum {
     YMODEM_SUCCESS = 0,           // Operation completed successfully
     YMODEM_ERR_GENERAL = -1,      // General error (I/O, protocol, timeout)
     YMODEM_ERR_CANCELLED = -2,    // Transfer cancelled by remote party
-    YMODEM_ERR_FILE_EXISTS = -3   // File already exists (receive mode)
+    YMODEM_ERR_FILE_EXISTS = -3,  // File already exists (receive mode)
+    YMODEM_ERR_TIMEOUT = -4       // No sender responded, nothing received (receive mode)
 } ymodem_result_t;
 
 // ============================================================================

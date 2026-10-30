@@ -41,11 +41,18 @@ _estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
 _Min_Heap_Size = 0x200; /* required amount of heap */
 _Min_Stack_Size = 0x400; /* required amount of stack */
 
-/* Memories definition */
+/* Memories definition
+ * 128K FLASH split in half: application in the lower 64K, LittleFS in the upper 64K.
+ * The "C8" part is rated for 64K, but this Blue Pill's chip reports 128K - check yours with
+ * OpenOCD "flash info 0" or the flash size register at 0x1FFFF7E0.
+ * Nothing is placed in LITTLEFS; it only reserves/documents the area.
+ * Keep FLASH_USER_START_ADDR / STM32F103_SECTOR_COUNT in littlefs_interface.h matching.
+ */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 20K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
+  RAM      (xrw)  : ORIGIN = 0x20000000,   LENGTH = 20K
+  FLASH    (rx)   : ORIGIN = 0x8000000,    LENGTH = 64K
+  LITTLEFS (rw)   : ORIGIN = 0x8010000,    LENGTH = 64K
 }
 
 /* Sections */

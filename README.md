@@ -3,7 +3,8 @@
 <br>
 This code base was originally developed for the NUCLEO-F103RB board (STM32-F103RB has 128KB of FLASH).<br>
 The "Release" build (-Os) is about 40KBytes; the "Debug" build (-O0) is about 64KBytes.<br>
-LittleFS storage uses the top 32KBytes of the 128K area (0x08018000), just like the STM32-F103RB.<br>
+FLASH is split in half: application in the lower 64KBytes, LittleFS in the upper 64KBytes (0x08010000).<br>
+The split is set in STM32F103C8TX_FLASH.ld and littlefs_interface.h; keep them matching.<br>
 The "C8" part is rated for 64KB, but this Blue Pill's chip reports 128KB (OpenOCD "flash size = 128 KiB").<br>
 <br>
 **Command line** (USART1, 115200 8N1)<br>

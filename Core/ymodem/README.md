@@ -57,6 +57,7 @@ Initiates batch-capable Y-Modem reception.
 - `YMODEM_ERR_GENERAL (-1)`: File system or protocol error
 - `YMODEM_ERR_CANCELLED (-2)`: Transfer cancelled by sender
 - `YMODEM_ERR_FILE_EXISTS (-3)`: File already exists (use 'rm' command first)
+- `YMODEM_ERR_TIMEOUT (-4)`: No sender started within ~30 seconds, nothing received
 
 **Behavior:**
 - Sends periodic 'C' characters to invite transmission
@@ -148,6 +149,7 @@ All functions return standardized codes defined in `ymodem.h`:
 - `YMODEM_ERR_GENERAL (-1)`: File system, timeout, CRC, or protocol error
 - `YMODEM_ERR_CANCELLED (-2)`: Transfer cancelled via CAN characters
 - `YMODEM_ERR_FILE_EXISTS (-3)`: Receive failed - file already exists
+- `YMODEM_ERR_TIMEOUT (-4)`: Receive failed - no sender responded to the 'C' requests
 
 ### Common Error Scenarios
 - **Timeout Errors**: No response within configured timeouts
@@ -262,6 +264,7 @@ On the SAME51, with `YMODEM_DEBUG` enabled, protocol traces looked like this (co
   - `log_msg()` -> `printf()`; SERCOM2 debug output compiled out
   - Transfer context made `static` to keep it off the stack
   - Added `YMODEM_COMMANDS` table record to ymodem.h
+  - Receive returns `YMODEM_ERR_TIMEOUT` (with a message) when no sender starts, instead of silent success
 
 - **v1.1** (2026-02-05): Enhanced error handling and API improvements
   - Added `ymodem_result_t` enum with named error codes

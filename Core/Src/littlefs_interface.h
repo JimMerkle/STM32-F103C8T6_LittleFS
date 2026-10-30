@@ -17,7 +17,14 @@
 #define PARAMETER_NOT_USED(p) (void) ((p))
 
 #if 1 //
-// The following are for an STM32-F103RB, with 128K FLASH:
+// 128K FLASH (STM32-F103RB, or a C8T6 with 128K): application in the lower 64K, LittleFS in the upper 64K
+// Must match the LITTLEFS region in STM32F103C8TX_FLASH.ld
+#define FLASH_USER_START_ADDR   ADDR_FLASH_PAGE_64   /* Start @ of user Flash area */
+#define FLASH_USER_END_ADDR     ADDR_FLASH_PAGE_127 + FLASH_PAGE_SIZE   /* End @ of user Flash area */
+#define STM32F103_SECTOR_SIZE	0x400 /* 1K */
+#define STM32F103_SECTOR_COUNT  64
+#elif 0
+// 128K FLASH, LittleFS in the upper 32K only (previous layout)
 #define FLASH_USER_START_ADDR   ADDR_FLASH_PAGE_96   /* Start @ of user Flash area */
 #define FLASH_USER_END_ADDR     ADDR_FLASH_PAGE_127 + FLASH_PAGE_SIZE   /* End @ of user Flash area */
 #define STM32F103_SECTOR_SIZE	0x400 /* 1K */

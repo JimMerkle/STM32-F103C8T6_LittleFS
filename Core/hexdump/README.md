@@ -25,7 +25,7 @@ Try `dump 0x1FFFF7E0 0x20`: the first 16-bit word is the flash size in KB, and t
 | Address | What |
 |---|---|
 | `0x08000000` | Flash (application) |
-| `0x08018000` | LittleFS storage (32 x 1K pages) |
+| `0x08010000` | LittleFS storage (64 x 1K pages) |
 | `0x1FFFF000` | System memory (ST bootloader) |
 | `0x1FFFF7E0` | Flash size (KB), unique ID at `0x1FFFF7E8` |
 | `0x20000000` | SRAM (20K) |

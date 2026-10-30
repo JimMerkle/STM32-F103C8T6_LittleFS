@@ -435,6 +435,7 @@ static int parse_block0(ymodem_ctx_t *ctx, size_t len) {
  *   YMODEM_ERR_GENERAL (-1): File system error or protocol failure
  *   YMODEM_ERR_CANCELLED (-2): Sender issued cancellation
  *   YMODEM_ERR_FILE_EXISTS (-3): File already exists
+ *   YMODEM_ERR_TIMEOUT (-4): No sender responded, no files received
  */
 int ymodem_receive(void) {
     static ymodem_ctx_t ctx;  // static: ~1.3K, keep it off the 20K part's stack
@@ -446,6 +447,7 @@ int ymodem_receive(void) {
     uint32_t last_c = 0;
     int c_retry_count = 0;
     const int MAX_C_RETRIES = 10;  // Maximum number of 'C' requests before timeout
+    int files_received = 0;        // a timeout after at least one file is a normal end of batch
 
     while (1) {
         // Send 'C' periodically to invite sender or request next file
@@ -458,7 +460,7 @@ int ymodem_receive(void) {
             // If we've sent too many 'C' requests without response, assume batch is complete
             if (c_retry_count > MAX_C_RETRIES) {
                 dbg_msg("[YMRX] timeout waiting for Block 0, sender not responding\n");
-                return YMODEM_SUCCESS;
+                return files_received ? YMODEM_SUCCESS : YMODEM_ERR_TIMEOUT;
             }
         }
 
@@ -539,6 +541,7 @@ int ymodem_receive(void) {
                     // End-of-file
                     ymodem_ack();
                     lfs_file_close(&lfs, &ctx.file);
+                    files_received++;
                     dbg_msg("[YMRX] file done: %s (%lu bytes)\n", ctx.filename, (unsigned long)ctx.bytes_done);
 
                     // SINGLE vs BATCH DETECTION:
@@ -928,6 +931,8 @@ int cl_ymodem(void) {
         int result = ymodem_receive();
         if (result == YMODEM_ERR_FILE_EXISTS) {
             printf("Y-Modem receive failed: File already exists. Delete it first using 'rm' command.\n");
+        } else if (result == YMODEM_ERR_TIMEOUT) {
+            printf("\nY-Modem receive timed out: no sender started (start the PC transfer within ~30 seconds)\n");
         } else if (result < 0) {
             printf("Y-Modem receive failed with error code: %d\n", result);
         }
